@@ -1,19 +1,62 @@
 import React from "react";
 import JsPDF from "jspdf";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 
 const PDFButton = () => {
-  const generatePDF = () => {
+  const generatePDF = async () => {
+    // Create a new jsPDF instance
     const report = new JsPDF({
       putOnlyUsedFonts: true,
       orientation: "landscape",
     });
-    report.html(document.querySelector("#report")).then(() => {
-      const pdfDataUri = report.output("datauristring");
-      const pdfWindow = window.open();
-      pdfWindow.document.write(
-        '<iframe width="100%" height="100%" src="' + pdfDataUri + '"></iframe>'
-      );
-    });
+
+    // Generate the PDF from HTML content
+    await report.html(document.querySelector("#report"));
+
+    // Load the PDF file from a URL
+    const response = await fetch("./assets/report.pdf");
+    const pdfBytes = await response.arrayBuffer();
+    console.log(response);
+    console.log(pdfBytes);
+    // Merge the two PDF files
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const reportPages = await PDFDocument.load(report.output("arraybuffer"));
+    const copiedPages = await pdfDoc.copyPages(
+      reportPages,
+      reportPages.getPageIndices()
+    );
+    for (let i = 0; i < copiedPages.length; i++) {
+      pdfDoc.addPage(copiedPages[i]);
+    }
+
+    // Download the merged PDF file
+
+    const mergedPdfBytes = await pdfDoc.save();
+    console.log(mergedPdfBytes);
+    downloadPdf(mergedPdfBytes, "example.pdf");
+    // const mergedPdfDataUri = `data:application/pdf;base64,${btoa(
+    //   String.fromCharCode(...new Uint8Array(mergedPdfBytes))
+    // )}`;
+
+    // console.log(mergedPdfDataUri);
+    // const pdfWindow = window.open();
+    // pdfWindow.document.write(
+    //   '<iframe width="100%" height="100%" src="' +
+    //     mergedPdfDataUri +
+    //     '"></iframe>'
+    // );
+  };
+  const downloadPdf = (base64PdfString, filename) => {
+    const pdfBlob = new Blob([base64PdfString], { type: "application/pdf" });
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    const link = document.createElement("a");
+    link.href = pdfUrl;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
