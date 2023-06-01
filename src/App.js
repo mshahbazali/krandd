@@ -1,124 +1,170 @@
-import React from "react";
-import JsPDF from "jspdf";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import html2pdf from "html2pdf.js";
+import React, { useRef, useState } from "react";
+import { Col, Row, Table } from "react-bootstrap";
+import { Document, Page } from "react-pdf/dist/esm/entry.webpack";
 
 const PDFButton = () => {
+  const componentRef = useRef();
+  const [view, setView] = useState(false);
+  const [numPages, setNumPages] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
   const generatePDF = async () => {
-    // Create a new jsPDF instance
-    const report = new JsPDF({
-      putOnlyUsedFonts: true,
-      orientation: "landscape",
-    });
+    const opt = {
+      margin: 10,
+      filename: "example.pdf",
+      image: { type: "jpeg", quality: 1 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "pt", format: "a4", orientation: "landscape" },
+    };
 
-    // Generate the PDF from HTML content
-    await report.html(document.querySelector("#report"));
+    const element = componentRef.current;
 
-    // Load the PDF file from a URL
-    const response = await fetch("./assets/report.pdf");
-    const pdfBytes = await response.arrayBuffer();
-    console.log(response);
-    console.log(pdfBytes);
-    // Merge the two PDF files
-    const pdfDoc = await PDFDocument.load(pdfBytes);
-    const reportPages = await PDFDocument.load(report.output("arraybuffer"));
-    const copiedPages = await pdfDoc.copyPages(
-      reportPages,
-      reportPages.getPageIndices()
-    );
-    for (let i = 0; i < copiedPages.length; i++) {
-      pdfDoc.addPage(copiedPages[i]);
-    }
-
-    // Download the merged PDF file
-
-    const mergedPdfBytes = await pdfDoc.save();
-    console.log(mergedPdfBytes);
-    downloadPdf(mergedPdfBytes, "example.pdf");
-    // const mergedPdfDataUri = `data:application/pdf;base64,${btoa(
-    //   String.fromCharCode(...new Uint8Array(mergedPdfBytes))
-    // )}`;
-
-    // console.log(mergedPdfDataUri);
-    // const pdfWindow = window.open();
-    // pdfWindow.document.write(
-    //   '<iframe width="100%" height="100%" src="' +
-    //     mergedPdfDataUri +
-    //     '"></iframe>'
-    // );
+    html2pdf().set(opt).from(element).save();
   };
-  const downloadPdf = (base64PdfString, filename) => {
-    const pdfBlob = new Blob([base64PdfString], { type: "application/pdf" });
-    const pdfUrl = URL.createObjectURL(pdfBlob);
 
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.download = filename;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
   };
 
   return (
     <>
-      <div>
-        <table style={{ width: "200px", tableLayout: "fixed" }} id="report">
-          <thead>
-            <tr>
-              <th style={{ width: "10%", fontSize: "10px" }}>Company</th>
-              <th style={{ width: "10%", fontSize: "10px" }}>Contact</th>
-              <th style={{ width: "10%", fontSize: "10px" }}>Country</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ width: "10%", fontSize: "10px" }}>
-                Alfreds Futterkiste
-              </td>
-              <td style={{ width: "10%", fontSize: "10px" }}>Maria Anders</td>
-              <td style={{ width: "10%", fontSize: "10px" }}>Germany</td>
-            </tr>
-            <tr>
-              <td style={{ width: "10%", fontSize: "10px" }}>
-                Centro comercial Moctezuma
-              </td>
-              <td style={{ width: "10%", fontSize: "10px" }}>
-                Francisco Chang
-              </td>
-              <td style={{ width: "10%", fontSize: "10px" }}>Mexico</td>
-            </tr>
-            <tr>
-              <td style={{ width: "10%", fontSize: "10px" }}>Ernst Handel</td>
-              <td style={{ width: "10%", fontSize: "10px" }}>Roland Mendel</td>
-              <td style={{ width: "10%", fontSize: "10px" }}>Austria</td>
-            </tr>
-            <tr>
-              <td style={{ width: "10%", fontSize: "10px" }}>Island Trading</td>
-              <td style={{ width: "10%", fontSize: "10px" }}>Helen Bennett</td>
-              <td style={{ width: "10%", fontSize: "10px" }}>UK</td>
-            </tr>
-            <tr>
-              <td style={{ width: "10%", fontSize: "10px" }}>
-                Laughing Bacchus Winecellars
-              </td>
-              <td style={{ width: "10%", fontSize: "10px" }}>
-                Yoshi Tannamuri
-              </td>
-              <td style={{ width: "10%", fontSize: "10px" }}>Canada</td>
-            </tr>
-            <tr>
-              <td style={{ width: "10%", fontSize: "10px" }}>
-                Magazzini Alimentari Riuniti
-              </td>
-              <td style={{ width: "10%", fontSize: "10px" }}>
-                Giovanni Rovelli
-              </td>
-              <td style={{ width: "10%", fontSize: "10px" }}>Italy</td>
-            </tr>
-          </tbody>
-        </table>
-        <button onClick={generatePDF}>Download PDF</button>
-      </div>
+      {view ? (
+        <div>
+          <Document
+            file="https://jsoncompare.org/LearningContainer/SampleFiles/PDF/sample-pdf-download-10-mb.pdf"
+            onLoadSuccess={onDocumentLoadSuccess}
+          >
+            {Array.from(new Array(numPages), (_, index) => (
+              <Page key={`page_${index + 1}`} pageNumber={index + 1} />
+            ))}
+          </Document>
+          <p>
+            Page {pageNumber} of {numPages}
+          </p>
+        </div>
+      ) : (
+        <div>
+          {" "}
+          <div
+            width="90%"
+            style={{ padding: "12px" }}
+            id="pack"
+            ref={componentRef}
+          >
+            <div>
+              {/* <img src={Logo} height="70px" width="90px" /> */}
+              <h4 style={{ textAlign: "center" }}>Packing List</h4>
+              <Row gutter={24} style={{ marginTop: "10px" }}>
+                <Col sm={8}>
+                  <div>
+                    <strong>Shipped From</strong>
+                  </div>
+                  <div>Medics</div>
+                  <div>Address</div>
+                  <div>Karachi, Sindh 72386</div>
+                </Col>
+                <Col sm={7}></Col>
+                <Col sm={8}>
+                  <div>
+                    <strong>Shipped To</strong>
+                  </div>
+                  <div>
+                    <span>Shahbaz</span> <span>Ali</span>
+                  </div>
+                  <div>Address</div>
+                  <div>Karachi, Sindh 758503</div>
+                </Col>
+              </Row>
+              <Row gutter={24} style={{ marginTop: 40 }}>
+                <Col sm={8}>
+                  <p>Order Number: 34234124</p>
+                  <div>
+                    <div>
+                      <strong>Ordered By</strong>
+                    </div>
+                    Clinician: Jhon Dern
+                  </div>
+                  <div>Address</div>
+                  <div>Karachi, Sindh 25325</div>
+                </Col>
+                <Col sm={7}></Col>
+                <Col sm={8}>
+                  <p>Number Of Packages: 1</p>
+                  <p>Ship Date: 03/05/2021</p>
+                  <p>
+                    <span>
+                      Tracking #:<small>235235124124</small>
+                    </span>
+                  </p>
+                  <div>Customer #: MS Jhon Devre</div>
+                </Col>
+              </Row>
+              <Row gutter={24}>
+                <Col sm={24}>
+                  <Table
+                    dataSource={[]}
+                    pagination={false}
+                    columns={[
+                      {
+                        title: "Item Number",
+                        dataIndex: "msitem",
+                        key: "msitem",
+                      },
+                      {
+                        title: "Item Description",
+                        dataIndex: "itemdescription",
+                        key: "itemdescription",
+                      },
+                      {
+                        title: "UOM",
+                        dataIndex: "_id",
+                        key: "_id",
+                      },
+                      {
+                        title: "Ordered",
+                        dataIndex: "units",
+                        key: "units",
+                      },
+                      {
+                        title: "Shipped",
+                        dataIndex: "units",
+                        key: "hcpcs",
+                      },
+                    ]}
+                    style={{ marginTop: "30px" }}
+                  ></Table>
+                </Col>
+              </Row>
+
+              <p />
+              <p />
+              <div>
+                <p>
+                  The products and/or services provided to you are subject to
+                  the supplier standards contained in the Federal regulations
+                  shown at 42 Code of Federal Regulations Section 424 57(c).
+                </p>
+                <p>
+                  {" "}
+                  These standards can be obtained at{" "}
+                  <a href="https://www.ecfr.gov"> https://www.ecfr.gov</a>{" "}
+                </p>
+                <p>
+                  {" "}
+                  In acknowledgement of the receipt of the products and services
+                  provided by my physician, I hereby agree that my insurance
+                  benefits be paid directly to my physician. In addition, I
+                  authorize the use of any information required to file
+                  insurance claims on my behalf from the prescribing physician
+                  and to the insurance carriers.
+                </p>
+              </div>
+            </div>
+          </div>
+          <button onClick={generatePDF}>Download PDF</button>
+          <button onClick={() => setView(true)}>View PDF</button>
+        </div>
+      )}
     </>
   );
 };
