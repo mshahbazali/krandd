@@ -32,6 +32,10 @@ export default function App() {
       title: "Salary",
       dataIndex: "salary",
       key: "salary",
+      render: (e)=> e.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      })
     },
     {
       title: "Currency",
@@ -39,6 +43,7 @@ export default function App() {
       key: "currency",
     },
   ];
+  
 
   // Sample data for demonstration purposes
   const dataSource = [
@@ -49,6 +54,7 @@ export default function App() {
       isEmployed: "true",
       salary: 5000.5,
       currency: "USD",
+      createdAt: "1985-10-15"
     },
     {
       id: 2,
@@ -57,6 +63,7 @@ export default function App() {
       isEmployed: "false",
       salary: 0,
       currency: "EUR",
+      createdAt: "1985-10-15"
     },
     {
       id: 3,
@@ -65,6 +72,7 @@ export default function App() {
       isEmployed: "true",
       salary: 7500.25,
       currency: "GBP",
+      createdAt: "1985-10-15"
     },
     {
       id: 4,
@@ -73,6 +81,7 @@ export default function App() {
       isEmployed: "true",
       salary: 4000.75,
       currency: "USD",
+      createdAt: "1985-10-15"
     },
     {
       id: 5,
@@ -81,6 +90,7 @@ export default function App() {
       isEmployed: "false",
       salary: 0,
       currency: "EUR",
+      createdAt: "1985-10-15"
     },
     {
       id: 6,
@@ -89,6 +99,7 @@ export default function App() {
       isEmployed: "true",
       salary: 6000.3,
       currency: "GBP",
+      createdAt: "1985-10-15"
     },
     {
       id: 7,
@@ -97,6 +108,7 @@ export default function App() {
       isEmployed: "true",
       salary: 5500.6,
       currency: "USD",
+      createdAt: "1985-10-15"
     },
     {
       id: 8,
@@ -105,6 +117,7 @@ export default function App() {
       isEmployed: "true",
       salary: 4800.8,
       currency: "EUR",
+      createdAt: "1985-10-15"
     },
     {
       id: 9,
@@ -113,6 +126,7 @@ export default function App() {
       isEmployed: "false",
       salary: 0,
       currency: "GBP",
+      createdAt: "1985-10-15"
     },
     {
       id: 10,
@@ -121,6 +135,7 @@ export default function App() {
       isEmployed: "true",
       salary: 7000.4,
       currency: "USD",
+      createdAt: "1985-10-15"
     },
     {
       id: 11,
@@ -129,6 +144,7 @@ export default function App() {
       isEmployed: "true",
       salary: 5200.7,
       currency: "EUR",
+      createdAt: "1985-10-15"
     },
     {
       id: 12,
@@ -137,6 +153,7 @@ export default function App() {
       isEmployed: "false",
       salary: 0,
       currency: "GBP",
+      createdAt: "1985-10-15"
     },
     {
       id: 13,
@@ -145,6 +162,7 @@ export default function App() {
       isEmployed: "true",
       salary: 6800.95,
       currency: "USD",
+      createdAt: "1985-10-15"
     },
     {
       id: 14,
@@ -153,6 +171,7 @@ export default function App() {
       isEmployed: "true",
       salary: 4400.55,
       currency: "EUR",
+      createdAt: "1985-10-15"
     },
     {
       id: 15,
@@ -161,6 +180,7 @@ export default function App() {
       isEmployed: "false",
       salary: 0,
       currency: "GBP",
+      createdAt: "1985-10-15"
     },
     {
       id: 16,
@@ -169,6 +189,7 @@ export default function App() {
       isEmployed: "true",
       salary: 5800.2,
       currency: "USD",
+      createdAt: "1985-10-15"
     },
     {
       id: 17,
@@ -177,6 +198,7 @@ export default function App() {
       isEmployed: "true",
       salary: 5200.35,
       currency: "EUR",
+      createdAt: "1985-10-15"
     },
     {
       id: 18,
@@ -185,6 +207,7 @@ export default function App() {
       isEmployed: "false",
       salary: 0,
       currency: "GBP",
+      createdAt: "1985-10-15"
     },
     {
       id: 19,
@@ -193,6 +216,7 @@ export default function App() {
       isEmployed: "true",
       salary: 6300.45,
       currency: "USD",
+      createdAt: "1985-10-15"
     },
     {
       id: 20,
@@ -201,11 +225,29 @@ export default function App() {
       isEmployed: "true",
       salary: 4700.65,
       currency: "EUR",
+      createdAt: "1985-10-15"
     },
   ];
+
   const handleExportExcel = () => {
+    const keysToExport = columns.filter(column => column.dataIndex).map(column => column.dataIndex);
+    const dataToExport = data.map(item => {
+      const filteredItem = {};
+      keysToExport.forEach(key => {
+        if (key === "salary") {
+          filteredItem[key] = item[key].toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'USD',
+          });
+        } else {
+          filteredItem[key] = item[key];
+        }
+      });
+      return filteredItem;
+    });
+  
     const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
@@ -216,25 +258,32 @@ export default function App() {
     });
     saveAs(dataBlob, "tableData.xlsx");
   };
-
+  
   const handleExportCSV = () => {
+    const keysToExport = columns.filter(column => column.dataIndex).map(column => column.dataIndex);
     const csvData = [];
-    const columns = data.length > 0 ? Object.keys(data[0]) : [];
-
-    // Push column headers
-    csvData.push(columns.join(","));
-
+    csvData.push(keysToExport.join(","));
+  
     // Push each row of data
     data.forEach((item) => {
-      const row = columns.map((column) => item[column]);
+      const row = keysToExport.map((key) => {
+        if (key === "salary") {
+          return item[key].toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'USD',
+          });
+        }
+        return item[key];
+      });
       csvData.push(row.join(","));
     });
-
+  
     // Create a CSV file and trigger download
     const csvContent = csvData.join("\n");
     const csvBlob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     saveAs(csvBlob, "tableData.csv");
   };
+  
   React.useEffect(() => {
     // Fetch or update your data and store it in the 'data' state
     setData(dataSource);
