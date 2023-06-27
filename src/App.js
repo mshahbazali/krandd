@@ -1,172 +1,251 @@
-import html2pdf from "html2pdf.js";
-import React, { useRef, useState } from "react";
-import { Col, Row, Table } from "react-bootstrap";
-import { Document, Page } from "react-pdf/dist/esm/entry.webpack";
+import React from "react";
+import { Table, Button } from "antd";
+import { saveAs } from "file-saver";
+import * as XLSX from 'xlsx';
+import { useState } from "react";
 
-const PDFButton = () => {
-  const componentRef = useRef();
-  const [view, setView] = useState(false);
-  const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const generatePDF = async () => {
-    const opt = {
-      margin: 10,
-      filename: "example.pdf",
-      image: { type: "jpeg", quality: 1 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "pt", format: "a4", orientation: "landscape" },
-    };
+export default function App() {
+  const [data, setData] = useState([]);
 
-    const element = componentRef.current;
+  const columns = [
+    {
+      title: "Id",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "Birth Day",
+      dataIndex: "birthdate",
+      key: "birthdate",
+    },
+    {
+      title: "Employed",
+      dataIndex: "isEmployed",
+      key: "isEmployed",
+    },
+    {
+      title: "Salary",
+      dataIndex: "salary",
+      key: "salary",
+    },
+    {
+      title: "Currency",
+      dataIndex: "currency",
+      key: "currency",
+    },
+  ];
 
-    html2pdf().set(opt).from(element).save();
+  // Sample data for demonstration purposes
+  const dataSource = [
+    {
+      id: 1,
+      name: "John Doe",
+      birthdate: "1985-10-15",
+      isEmployed: "true",
+      salary: 5000.5,
+      currency: "USD",
+    },
+    {
+      id: 2,
+      name: "Jane Smith",
+      birthdate: "1990-07-20",
+      isEmployed: "false",
+      salary: 0,
+      currency: "EUR",
+    },
+    {
+      id: 3,
+      name: "Michael Johnson",
+      birthdate: "1978-03-05",
+      isEmployed: "true",
+      salary: 7500.25,
+      currency: "GBP",
+    },
+    {
+      id: 4,
+      name: "Sarah Williams",
+      birthdate: "1992-12-08",
+      isEmployed: "true",
+      salary: 4000.75,
+      currency: "USD",
+    },
+    {
+      id: 5,
+      name: "David Brown",
+      birthdate: "1989-05-25",
+      isEmployed: "false",
+      salary: 0,
+      currency: "EUR",
+    },
+    {
+      id: 6,
+      name: "Emily Davis",
+      birthdate: "1995-09-03",
+      isEmployed: "true",
+      salary: 6000.3,
+      currency: "GBP",
+    },
+    {
+      id: 7,
+      name: "Matthew Wilson",
+      birthdate: "1982-06-18",
+      isEmployed: "true",
+      salary: 5500.6,
+      currency: "USD",
+    },
+    {
+      id: 8,
+      name: "Olivia Taylor",
+      birthdate: "1987-01-12",
+      isEmployed: "true",
+      salary: 4800.8,
+      currency: "EUR",
+    },
+    {
+      id: 9,
+      name: "Daniel Martinez",
+      birthdate: "1976-11-27",
+      isEmployed: "false",
+      salary: 0,
+      currency: "GBP",
+    },
+    {
+      id: 10,
+      name: "Sophia Anderson",
+      birthdate: "1993-04-07",
+      isEmployed: "true",
+      salary: 7000.4,
+      currency: "USD",
+    },
+    {
+      id: 11,
+      name: "Jacob Thomas",
+      birthdate: "1984-08-31",
+      isEmployed: "true",
+      salary: 5200.7,
+      currency: "EUR",
+    },
+    {
+      id: 12,
+      name: "Ava Rodriguez",
+      birthdate: "1991-02-19",
+      isEmployed: "false",
+      salary: 0,
+      currency: "GBP",
+    },
+    {
+      id: 13,
+      name: "William Martinez",
+      birthdate: "1981-07-24",
+      isEmployed: "true",
+      salary: 6800.95,
+      currency: "USD",
+    },
+    {
+      id: 14,
+      name: "Mia Clark",
+      birthdate: "1988-03-10",
+      isEmployed: "true",
+      salary: 4400.55,
+      currency: "EUR",
+    },
+    {
+      id: 15,
+      name: "James Lewis",
+      birthdate: "1994-10-05",
+      isEmployed: "false",
+      salary: 0,
+      currency: "GBP",
+    },
+    {
+      id: 16,
+      name: "Charlotte Turner",
+      birthdate: "1983-05-23",
+      isEmployed: "true",
+      salary: 5800.2,
+      currency: "USD",
+    },
+    {
+      id: 17,
+      name: "Benjamin Scott",
+      birthdate: "1986-12-13",
+      isEmployed: "true",
+      salary: 5200.35,
+      currency: "EUR",
+    },
+    {
+      id: 18,
+      name: "Amelia Hill",
+      birthdate: "1979-08-08",
+      isEmployed: "false",
+      salary: 0,
+      currency: "GBP",
+    },
+    {
+      id: 19,
+      name: "Alexander Young",
+      birthdate: "1996-03-02",
+      isEmployed: "true",
+      salary: 6300.45,
+      currency: "USD",
+    },
+    {
+      id: 20,
+      name: "Ella Phillips",
+      birthdate: "1980-09-17",
+      isEmployed: "true",
+      salary: 4700.65,
+      currency: "EUR",
+    },
+  ];
+  const handleExportExcel = () => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const dataBlob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(dataBlob, "tableData.xlsx");
   };
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
-    setNumPages(numPages);
-  };
+  const handleExportCSV = () => {
+    const csvData = [];
+    const columns = data.length > 0 ? Object.keys(data[0]) : [];
 
+    // Push column headers
+    csvData.push(columns.join(","));
+
+    // Push each row of data
+    data.forEach((item) => {
+      const row = columns.map((column) => item[column]);
+      csvData.push(row.join(","));
+    });
+
+    // Create a CSV file and trigger download
+    const csvContent = csvData.join("\n");
+    const csvBlob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    saveAs(csvBlob, "tableData.csv");
+  };
+  React.useEffect(() => {
+    // Fetch or update your data and store it in the 'data' state
+    setData(dataSource);
+  }, []);
   return (
-    <>
-      {view ? (
-        <div>
-          <Document
-            file="https://jsoncompare.org/LearningContainer/SampleFiles/PDF/sample-pdf-download-10-mb.pdf"
-            onLoadSuccess={onDocumentLoadSuccess}
-          >
-            {Array.from(new Array(numPages), (_, index) => (
-              <Page key={`page_${index + 1}`} pageNumber={index + 1} />
-            ))}
-          </Document>
-          <p>
-            Page {pageNumber} of {numPages}
-          </p>
-        </div>
-      ) : (
-        <div>
-          {" "}
-          <div
-            width="90%"
-            style={{ padding: "12px" }}
-            id="pack"
-            ref={componentRef}
-          >
-            <div>
-              {/* <img src={Logo} height="70px" width="90px" /> */}
-              <h4 style={{ textAlign: "center" }}>Packing List</h4>
-              <Row gutter={24} style={{ marginTop: "10px" }}>
-                <Col sm={8}>
-                  <div>
-                    <strong>Shipped From</strong>
-                  </div>
-                  <div>Medics</div>
-                  <div>Address</div>
-                  <div>Karachi, Sindh 72386</div>
-                </Col>
-                <Col sm={7}></Col>
-                <Col sm={8}>
-                  <div>
-                    <strong>Shipped To</strong>
-                  </div>
-                  <div>
-                    <span>Shahbaz</span> <span>Ali</span>
-                  </div>
-                  <div>Address</div>
-                  <div>Karachi, Sindh 758503</div>
-                </Col>
-              </Row>
-              <Row gutter={24} style={{ marginTop: 40 }}>
-                <Col sm={8}>
-                  <p>Order Number: 34234124</p>
-                  <div>
-                    <div>
-                      <strong>Ordered By</strong>
-                    </div>
-                    Clinician: Jhon Dern
-                  </div>
-                  <div>Address</div>
-                  <div>Karachi, Sindh 25325</div>
-                </Col>
-                <Col sm={7}></Col>
-                <Col sm={8}>
-                  <p>Number Of Packages: 1</p>
-                  <p>Ship Date: 03/05/2021</p>
-                  <p>
-                    <span>
-                      Tracking #:<small>235235124124</small>
-                    </span>
-                  </p>
-                  <div>Customer #: MS Jhon Devre</div>
-                </Col>
-              </Row>
-              <Row gutter={24}>
-                <Col sm={24}>
-                  <Table
-                    dataSource={[]}
-                    pagination={false}
-                    columns={[
-                      {
-                        title: "Item Number",
-                        dataIndex: "msitem",
-                        key: "msitem",
-                      },
-                      {
-                        title: "Item Description",
-                        dataIndex: "itemdescription",
-                        key: "itemdescription",
-                      },
-                      {
-                        title: "UOM",
-                        dataIndex: "_id",
-                        key: "_id",
-                      },
-                      {
-                        title: "Ordered",
-                        dataIndex: "units",
-                        key: "units",
-                      },
-                      {
-                        title: "Shipped",
-                        dataIndex: "units",
-                        key: "hcpcs",
-                      },
-                    ]}
-                    style={{ marginTop: "30px" }}
-                  ></Table>
-                </Col>
-              </Row>
-
-              <p />
-              <p />
-              <div>
-                <p>
-                  The products and/or services provided to you are subject to
-                  the supplier standards contained in the Federal regulations
-                  shown at 42 Code of Federal Regulations Section 424 57(c).
-                </p>
-                <p>
-                  {" "}
-                  These standards can be obtained at{" "}
-                  <a href="https://www.ecfr.gov"> https://www.ecfr.gov</a>{" "}
-                </p>
-                <p>
-                  {" "}
-                  In acknowledgement of the receipt of the products and services
-                  provided by my physician, I hereby agree that my insurance
-                  benefits be paid directly to my physician. In addition, I
-                  authorize the use of any information required to file
-                  insurance claims on my behalf from the prescribing physician
-                  and to the insurance carriers.
-                </p>
-              </div>
-            </div>
-          </div>
-          <button onClick={generatePDF}>Download PDF</button>
-          <button onClick={() => setView(true)}>View PDF</button>
-        </div>
-      )}
-    </>
+    <div style={{margin: 20}}>
+      <div style={{marginBottom: 20}}>
+      <Button onClick={handleExportExcel}>Export to Excel</Button>
+      <Button onClick={handleExportCSV}>Export to CSV</Button>
+      </div>
+      <Table columns={columns} dataSource={data} />
+    </div>
   );
-};
-
-export default PDFButton;
+}
